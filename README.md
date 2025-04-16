@@ -20,6 +20,8 @@ Setup: `meson setup build`
 
 Build: `meson compile -C build`
 
+## Testing
+
 # Usage
 
 ## Loader
