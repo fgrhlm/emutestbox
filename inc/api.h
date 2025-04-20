@@ -1,49 +1,39 @@
 #ifndef API_H
 #define API_H
 
-#include "loader.h"
 #include "runner.h"
 
-typedef enum { CYCLE_READ, CYCLE_WRITE } etb_emu_cycle_type;
-typedef enum { SINGLE_THREADED, MULTI_THREADED } runner_multi;
+typedef enum {
+    REG_6502_PC,
+    REG_6502_S,
+    REG_6502_A,
+    REG_6502_X,
+    REG_6502_Y,
+    REG_6502_P
+} etb_reg_6502;
+
+typedef enum { CYCLE_READ, CYCLE_WRITE } etb_cycle_type;
+typedef enum { SINGLE_THREADED, MULTI_THREADED } threads;
 
 typedef int (*ext_int)();
 
 typedef struct {
-    char *name;
-    uint8_t *val;
-} etb_emu_reg_8;
+    int reg_pc, reg_s, reg_a, reg_x, reg_y, reg_p;
+    int *ram;
+    etb_cycle_type *cycles_type;
+    int *cycles_val;
+} etb_emu_6502;
 
-typedef struct {
-    char *name;
-    uint16_t *val;
-} etb_emu_reg_16;
+/*
 
-typedef struct {
-    etb_emu_cycle_type t;
-    uint8_t val;
-} etb_emu_cycle;
+int etb_emu_6502_reg_get(char* reg_name){ return 0; };
+int etb_emu_6502_reg_set(etb_reg_6502 reg, int val){ return 0; };
 
-typedef struct {
+int etb_emu_6502_ram_get(int addr){ return 0; };
+int etb_emu_6502_ram_set(int addr, int val){ return 0; };
 
-} etb_emu;
+int etb_emu_6502_step(){ return 0; };
 
-// Link registers
-void etb_emu_define_regs();
-// Link RAM
-void etb_emu_define_ram();
-// Link step
-void etb_emu_define_step();
-
-// SingleStepTests
-int etb_emu_run_single_step_tests(char *path, int dir, singlesteptests_6502_test_result *results){
-    results = malloc(sizeof(singlesteptests_6502_test_result) * SINGLE_STEP_TESTS_LEN);
-
-    return 0;
-}
-
-void etb_emu_destroy_results(singlesteptests_6502_test_result *results){
-    free(results);
-}
+*/
 
 #endif

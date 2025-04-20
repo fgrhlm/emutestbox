@@ -3,8 +3,6 @@
 
 #define SINGLE_STEP_TESTS_LEN 10000
 
-#include "loader.h"
-
 typedef enum { PASSED, FAILED } TEST_STATUS;
 
 typedef struct {
