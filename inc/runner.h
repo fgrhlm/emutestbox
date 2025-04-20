@@ -3,14 +3,18 @@
 
 #define SINGLE_STEP_TESTS_LEN 10000
 
-typedef enum { PASSED, FAILED } TEST_STATUS;
+#include "loader.h"
+
+typedef enum { TEST_PASSED, TEST_FAILED } etb_test_status;
 
 typedef struct {
     char *file;
     char *name;
     int index;
-    TEST_STATUS status;
+    etb_test_status status;
     char *msg;
-} singlesteptests_6502_test_result;
+} test_result_6502;
+
+test_result_6502 run_6502_test(etb_test *test);
 
 #endif

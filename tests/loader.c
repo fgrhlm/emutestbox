@@ -24,6 +24,8 @@ static void t_etb_init_loader(void **state){
     etb_init_loader(&loader);
 
     assert_int_equal(loader.num_threads, NUM_THREADS);
+
+    etb_destroy_loader(&loader);
 }
 
 static void t_etb_init_loader_threaded(void **state){
@@ -35,6 +37,8 @@ static void t_etb_init_loader_threaded(void **state){
     etb_init_loader_threaded(&loader, 4);
 
     assert_int_equal(loader.num_threads, NUM_THREADS);
+
+    etb_destroy_loader(&loader);
 }
 
 static void t_etb_destroy_loader(void **state){

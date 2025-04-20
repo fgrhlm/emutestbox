@@ -9,6 +9,7 @@ dep_jansson = dependency('jansson')
 dep_cmocka = dependency('cmocka')
 
 src_etb = files(
+  'src/api.c',
   'src/loader.c',
   'src/runner.c',
   'src/debugger.c'
@@ -34,10 +35,10 @@ dep_etb_test = declare_dependency(
 )
 
 src_test_loader = files('src/loader.c', 'tests/loader.c')
-executable('test_loader', src_test_loader, dependencies : dep_etb_test)
+executable('test_loader', src_test_loader, dependencies : dep_etb_test,)
 
-src_test_api = files('tests/api.c')
-executable('test_api', src_test_api, dependencies : dep_etb_test)
+src_test_api = files('src/api.c', 'tests/api.c')
+executable('test_api', src_test_api, dependencies : dep_etb_test, c_args : '-fno-stack-protector')
 
 configure_file(
   input : 'tests/test.json',

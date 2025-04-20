@@ -1,103 +1,111 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <setjmp.h>
 #include <cmocka.h>
 
 #include "api.h"
 
-int pc = 0;
-int regs[] = {0,1,2,3,4,5};
-int ram[] = {0,1,2,3,4,5};
+int dum_pc = 1;
+int dum_s = 2;
+int dum_a = 3;
+int dum_x = 4;
+int dum_y = 5;
+int dum_p = 6;
+int dum_ram[3] = {1,2,3};
 
-int t_reg_get(etb_reg_6502 reg){ return regs[reg]; }
-void t_reg_set(etb_reg_6502 reg, int val){ regs[reg] = val; }
-int t_ram_get(int addr){ return ram[addr]; }
-void t_ram_set(int addr, int val){ ram[addr] = val; }
-int t_step(){ pc++; return pc; }
-
-// Mock emu hooks
-#define ETB_EMU_6502_REG_GET t_reg_get
-#define ETB_EMU_6502_REG_SET t_reg_set
-#define ETB_EMU_6502_RAM_GET t_ram_get
-#define ETB_EMU_6502_RAM_SET t_ram_set
-#define ETB_EMU_6502_STEP  t_step
+int etb_emu_6502_step(etb_emu_6502 *emu){
+    *emu->regs[REG_6502_PC] = 12;
+    return *emu->regs[REG_6502_PC];
+}
 
 // Null case
 static void null_case(void **state){
     (void) state;
 }
 
-static void t_etb_test_reg(void **state){
+static void t_hooks_get_set(void **state){
     (void) state;
 
-    // Get
-    assert_int_equal(t_reg_get(REG_6502_PC), 0);
-    assert_int_equal(t_reg_get(REG_6502_S), 1);
-    assert_int_equal(t_reg_get(REG_6502_A), 2);
-    assert_int_equal(t_reg_get(REG_6502_X), 3);
-    assert_int_equal(t_reg_get(REG_6502_Y), 4);
-    assert_int_equal(t_reg_get(REG_6502_P), 5);
+    etb_emu_6502 emu;
 
-    // Set
-    t_reg_set(REG_6502_PC, 100);
-    t_reg_set(REG_6502_S, 101);
-    t_reg_set(REG_6502_A, 102);
-    t_reg_set(REG_6502_X, 103);
-    t_reg_set(REG_6502_Y, 104);
-    t_reg_set(REG_6502_P, 105);
+    etb_emu_6502_hook_pc(&emu, &dum_pc);
+    assert_int_equal(etb_emu_6502_reg_get(&emu, REG_6502_PC), 1);
 
-    assert_int_equal(t_reg_get(REG_6502_PC), 100);
-    assert_int_equal(t_reg_get(REG_6502_S), 101);
-    assert_int_equal(t_reg_get(REG_6502_A), 102);
-    assert_int_equal(t_reg_get(REG_6502_X), 103);
-    assert_int_equal(t_reg_get(REG_6502_Y), 104);
-    assert_int_equal(t_reg_get(REG_6502_P), 105);
+    etb_emu_6502_hook_s(&emu, &dum_s);
+    assert_int_equal(etb_emu_6502_reg_get(&emu, REG_6502_S), 2);
+
+    etb_emu_6502_hook_a(&emu, &dum_a);
+    assert_int_equal(etb_emu_6502_reg_get(&emu, REG_6502_A), 3);
+
+    etb_emu_6502_hook_x(&emu, &dum_x);
+    assert_int_equal(etb_emu_6502_reg_get(&emu, REG_6502_X), 4);
+
+    etb_emu_6502_hook_y(&emu, &dum_y);
+    assert_int_equal(etb_emu_6502_reg_get(&emu, REG_6502_Y), 5);
+
+    etb_emu_6502_hook_p(&emu, &dum_p);
+    assert_int_equal(etb_emu_6502_reg_get(&emu, REG_6502_P), 6);
+
+    etb_emu_6502_hook_ram(&emu, dum_ram);
+
+    assert_int_equal(etb_emu_6502_ram_get(&emu, 0), 1);
+    assert_int_equal(etb_emu_6502_ram_get(&emu, 1), 2);
+    assert_int_equal(etb_emu_6502_ram_get(&emu, 2), 3);
+
+    etb_emu_6502_reg_set(&emu, REG_6502_PC, 101);
+    etb_emu_6502_reg_set(&emu, REG_6502_S, 102);
+    etb_emu_6502_reg_set(&emu, REG_6502_A, 103);
+    etb_emu_6502_reg_set(&emu, REG_6502_X, 104);
+    etb_emu_6502_reg_set(&emu, REG_6502_Y, 105);
+    etb_emu_6502_reg_set(&emu, REG_6502_P, 106);
+
+    etb_emu_6502_ram_set(&emu, 0, 101);
+    etb_emu_6502_ram_set(&emu, 1, 102);
+    etb_emu_6502_ram_set(&emu, 2, 103);
+
+    assert_int_equal(etb_emu_6502_reg_get(&emu, REG_6502_PC), 101);
+    assert_int_equal(etb_emu_6502_reg_get(&emu, REG_6502_S), 102);
+    assert_int_equal(etb_emu_6502_reg_get(&emu, REG_6502_A), 103);
+    assert_int_equal(etb_emu_6502_reg_get(&emu, REG_6502_X), 104);
+    assert_int_equal(etb_emu_6502_reg_get(&emu, REG_6502_Y), 105);
+    assert_int_equal(etb_emu_6502_reg_get(&emu, REG_6502_P), 106);
+
+    assert_int_equal(etb_emu_6502_ram_get(&emu, 0), 101);
+    assert_int_equal(etb_emu_6502_ram_get(&emu, 1), 102);
+    assert_int_equal(etb_emu_6502_ram_get(&emu, 2), 103);
 }
 
-static void t_etb_test_ram(void **state){
+
+static void t_step(void **state){
     (void) state;
 
-    // Get
-    assert_int_equal(t_ram_get(0), 0);
-    assert_int_equal(t_ram_get(1), 1);
-    assert_int_equal(t_ram_get(2), 2);
-    assert_int_equal(t_ram_get(3), 3);
-    assert_int_equal(t_ram_get(4), 4);
+    etb_emu_6502 emu;
 
-    // Set
-    t_ram_set(0, 100);
-    t_ram_set(1, 101);
-    t_ram_set(2, 102);
-    t_ram_set(3, 103);
-    t_ram_set(4, 104);
+    etb_emu_6502_hook_pc(&emu, &dum_pc);
+    assert_int_equal(etb_emu_6502_reg_get(&emu, REG_6502_PC), 101);
 
-    assert_int_equal(t_ram_get(0), 100);
-    assert_int_equal(t_ram_get(1), 101);
-    assert_int_equal(t_ram_get(2), 102);
-    assert_int_equal(t_ram_get(3), 103);
-    assert_int_equal(t_ram_get(4), 104);
+    etb_emu_6502_step(&emu);
+    assert_int_equal(etb_emu_6502_reg_get(&emu, REG_6502_PC), 12);
 }
 
-static void t_etb_test_step(void **state){
+static void t_run_6502_tests(void **state){
     (void) state;
 
-    int old_pc = pc;
+    etb_emu_6502 emu;
+    etb_test_status status = etb_run_6502_tests(&emu, "./build", 1);
 
-    assert_int_equal(t_step(), (old_pc + 1));
-}
-
-static void t_etb_test_6502_single_step_tests(void **state){
-    (void) state;
+    assert_int_equal(status, TEST_FAILED);
 }
 
 int main(void){
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(null_case),
-        cmocka_unit_test(t_etb_test_reg),
-        cmocka_unit_test(t_etb_test_ram),
-        cmocka_unit_test(t_etb_test_step),
-        cmocka_unit_test(t_etb_test_6502_single_step_tests)
+        cmocka_unit_test(t_hooks_get_set),
+        cmocka_unit_test(t_step),
+        cmocka_unit_test(t_run_6502_tests)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
