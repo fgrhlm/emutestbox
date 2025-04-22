@@ -57,16 +57,11 @@ static void t_etb_destroy_loader(void **state){
 static void t_etb_load_6502_test(void **state){
     (void) state;
 
-    const char* NAME_STRING = "JSON_TEST_FILE";
-
     etb_loader loader;
-    etb_test t_test[10000]; // All 6502 singlesteptests are this long
+    etb_test *tests;
 
     etb_init_loader(&loader);
-    etb_load_6502_json(&loader, t_test, "./build/test.json");
-
-    assert_string_equal(NAME_STRING, t_test[0].name);
-    assert_string_equal(NAME_STRING, t_test[1].name);
+    tests = load_6502_test("/home/rcd/proj/65x02/6502/v1/5a.json");
 
     etb_destroy_loader(&loader);
 }

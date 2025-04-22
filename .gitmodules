@@ -1,0 +1,3 @@
+[submodule "tests/6502-emu"]
+	path = tests/6502-emu
+	url = https://github.com/DavidBuchanan314/6502-emu/

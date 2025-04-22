@@ -4,21 +4,22 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <setjmp.h>
+#include <string.h>
 #include <cmocka.h>
+#include <dirent.h>
 
 #include "api.h"
 
-int dum_pc = 1;
-int dum_s = 2;
-int dum_a = 3;
-int dum_x = 4;
-int dum_y = 5;
-int dum_p = 6;
-int dum_ram[3] = {1,2,3};
+uint16_t dum_pc = 1;
+uint8_t dum_s = 2;
+uint8_t dum_a = 3;
+uint8_t dum_x = 4;
+uint8_t dum_y = 5;
+uint8_t dum_p = 6;
+uint8_t dum_ram[3] = {1,2,3};
 
-int etb_emu_6502_step(etb_emu_6502 *emu){
-    *emu->regs[REG_6502_PC] = 12;
-    return *emu->regs[REG_6502_PC];
+void etb_emu_6502_step(){
+    dum_pc = 12;
 }
 
 // Null case
@@ -87,17 +88,51 @@ static void t_step(void **state){
     etb_emu_6502_hook_pc(&emu, &dum_pc);
     assert_int_equal(etb_emu_6502_reg_get(&emu, REG_6502_PC), 101);
 
-    etb_emu_6502_step(&emu);
+    etb_emu_6502_hook_step(&emu, etb_emu_6502_step);
+    etb_emu_6502_step();
     assert_int_equal(etb_emu_6502_reg_get(&emu, REG_6502_PC), 12);
 }
 
 static void t_run_6502_tests(void **state){
     (void) state;
 
-    etb_emu_6502 emu;
-    etb_test_status status = etb_run_6502_tests(&emu, "./build", 1);
+    char dir_path[] = "/home/rcd/proj/65x02/6502/v1/";
 
-    assert_int_equal(status, TEST_FAILED);
+    struct dirent *d;
+    DIR *test_dir = opendir(dir_path);
+
+    if(test_dir == NULL){
+        printf("could not open test dir!\n");
+        exit(1);
+    }
+
+    while ((d = readdir(test_dir)) != NULL) {
+        if(!strcmp(d->d_name, ".") || !strcmp(d->d_name,"..")){
+            continue;
+        }
+        int ram[UINT16_MAX] = {0};
+        etb_emu_6502 emu;
+
+        etb_emu_6502_hook_pc(&emu, &dum_pc);
+        etb_emu_6502_hook_s(&emu, &dum_s);
+        etb_emu_6502_hook_a(&emu, &dum_a);
+        etb_emu_6502_hook_x(&emu, &dum_x);
+        etb_emu_6502_hook_y(&emu, &dum_y);
+        etb_emu_6502_hook_p(&emu, &dum_p);
+        etb_emu_6502_hook_ram(&emu, dum_ram);
+        etb_emu_6502_hook_step(&emu, etb_emu_6502_step);
+
+        char t_path[strlen(dir_path)];
+        strcpy(t_path, dir_path);
+
+        strcat(t_path, d->d_name);
+
+        etb_test_status status = etb_run_6502_test(&emu, t_path, 1);
+
+        assert_int_equal(status, TEST_FAILED);
+    }
+
+    closedir(test_dir);
 }
 
 int main(void){

@@ -5,6 +5,8 @@ project(
 
 inc = include_directories('inc')
 
+inc_ref_1 = include_directories('tests/6502-emu')
+
 dep_jansson = dependency('jansson')
 dep_cmocka = dependency('cmocka')
 
@@ -35,10 +37,13 @@ dep_etb_test = declare_dependency(
 )
 
 src_test_loader = files('src/loader.c', 'tests/loader.c')
-executable('test_loader', src_test_loader, dependencies : dep_etb_test,)
+executable('test_loader', src_test_loader, dependencies : dep_etb_test, c_args : '-pg', link_args : '-pg')
 
 src_test_api = files('src/api.c', 'tests/api.c')
-executable('test_api', src_test_api, dependencies : dep_etb_test, c_args : '-fno-stack-protector')
+executable('test_api', src_test_api, dependencies : dep_etb_test, c_args : ['-fno-stack-protector', '-pg'], link_args : '-pg')
+
+src_test_ref_1 = files('tests/6502-emu/6502.c', 'tests/ref_1.c')
+executable('test_ref_1', src_test_ref_1, dependencies : dep_etb_test, c_args : ['-fno-stack-protector', '-pg'], link_args : '-pg', include_directories : inc_ref_1)
 
 configure_file(
   input : 'tests/test.json',
