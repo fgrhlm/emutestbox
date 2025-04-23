@@ -43,4 +43,6 @@ int etb_emu_6502_reg_set(etb_emu_6502 *emu, etb_reg_6502 reg, int val);
 int etb_emu_6502_ram_get(etb_emu_6502 *emu, int addr);
 int etb_emu_6502_ram_set(etb_emu_6502 *emu, int addr, uint8_t val);
 
+void set_regs(etb_emu_6502 *emu, int pc, int s, int a, int x, int y, int p);
+
 #endif

@@ -9,7 +9,7 @@ int etb_emu_6502_reg_get(etb_emu_6502* emu, etb_reg_6502 reg){
         return *emu->pc;
     }
 
-    return *emu->regs[reg];
+    return (int)*emu->regs[reg];
 }
 int etb_emu_6502_reg_set(etb_emu_6502* emu, etb_reg_6502 reg, int val){
     if(reg == REG_6502_PC){
@@ -47,7 +47,7 @@ void set_regs(etb_emu_6502 *emu, int pc, int s, int a, int x, int y, int p){
     etb_emu_6502_reg_set(emu, REG_6502_P, p);
 }
 
-int assert_reg(char *reg, uint16_t a, uint16_t b){
+int assert_reg_16(char *reg, uint16_t a, uint16_t b){
     if(a != b){
         if(TEST_VERBOSE){
             printf("Assert failed: %s (should be: %d was %d)\n", reg, a, b);
@@ -58,8 +58,16 @@ int assert_reg(char *reg, uint16_t a, uint16_t b){
     return 0;
 }
 
-int assert_reg_8(char* reg, uint8_t a, uint8_t b){ return assert_reg(reg, (int)a, (int)b); }
-int assert_reg_16(char* reg, uint16_t a, uint16_t b){ return assert_reg(reg, (int)a, (int)b); }
+int assert_reg_8(char *reg, uint8_t a, uint8_t b){
+    if(a != b){
+        if(TEST_VERBOSE){
+            printf("Assert failed: %s (should be: %d was %d)\n", reg, a, b);
+        }
+        return 1;
+    }
+
+    return 0;
+}
 
 etb_test_status etb_run_6502_test(etb_emu_6502 *emu, char *test_path, int num_threads){
     printf("Run test: %s..\n", test_path);
@@ -104,12 +112,12 @@ etb_test_status etb_run_6502_test(etb_emu_6502 *emu, char *test_path, int num_th
         f_p = (uint8_t)etb_emu_6502_reg_get(emu, REG_6502_P);
 
         // Check if registers hold the expected values.
-        reg_results += assert_reg_16("PC", tests[i].initial->pc, f_pc);
-        reg_results += assert_reg_8("S", tests[i].initial->s, f_s);
-        reg_results += assert_reg_8("A", tests[i].initial->a, f_a);
-        reg_results += assert_reg_8("X", tests[i].initial->x, f_x);
-        reg_results += assert_reg_8("Y", tests[i].initial->y, f_y);
-        reg_results += assert_reg_8("P", tests[i].initial->p, f_p);
+        reg_results += assert_reg_16("Init. PC", tests[i].initial->pc, f_pc);
+        reg_results += assert_reg_8("Init. S", tests[i].initial->s, f_s);
+        reg_results += assert_reg_8("Init. A", tests[i].initial->a, f_a);
+        reg_results += assert_reg_8("Init. X", tests[i].initial->x, f_x);
+        reg_results += assert_reg_8("Init. Y", tests[i].initial->y, f_y);
+        reg_results += assert_reg_8("Init. P", tests[i].initial->p, f_p);
 
         // Same with ram
         for(int j=0; j<tests[i].initial->mem_len; j++){
@@ -121,12 +129,11 @@ etb_test_status etb_run_6502_test(etb_emu_6502 *emu, char *test_path, int num_th
             if(initial != val){
                 ram_results++;
                 if(TEST_VERBOSE){ return 1; }
-                printf("[ASSERT FAIL]: RAM [%d]\n\tExpected: %d\n\tValue: %d\n",addr,val,initial);
+                printf("[ASSERT FAIL]: INITIAL RAM [%d]\n\tExpected: %d\n\tValue: %d\n",addr,val,initial);
             }
         }
 
         // Step emulator
-        etb_emu_6502_reg_set(emu, REG_6502_PC, *emu->pc+1);
         (*emu->step)();
 
         // Get registers state.
@@ -138,12 +145,12 @@ etb_test_status etb_run_6502_test(etb_emu_6502 *emu, char *test_path, int num_th
         f_p = etb_emu_6502_reg_get(emu, REG_6502_P);
 
         // Check if registers hold the expected values.
-        reg_results += assert_reg_16("PC", tests[i].final->pc, f_pc);
-        reg_results += assert_reg_8("S", tests[i].final->s, f_s);
-        reg_results += assert_reg_8("A", tests[i].final->a, f_a);
-        reg_results += assert_reg_8("X", tests[i].final->x, f_x);
-        reg_results += assert_reg_8("Y", tests[i].final->y, f_y);
-        reg_results += assert_reg_8("P", tests[i].final->p, f_p);
+        reg_results += assert_reg_16("Final PC", tests[i].final->pc, f_pc);
+        reg_results += assert_reg_8("Final S", tests[i].final->s, f_s);
+        reg_results += assert_reg_8("Final A", tests[i].final->a, f_a);
+        reg_results += assert_reg_8("Final X", tests[i].final->x, f_x);
+        reg_results += assert_reg_8("Final Y", tests[i].final->y, f_y);
+        reg_results += assert_reg_8("Final P", tests[i].final->p, f_p);
 
         // Same with ram
         for(int j=0; j<tests[i].final->mem_len; j++){
@@ -154,7 +161,7 @@ etb_test_status etb_run_6502_test(etb_emu_6502 *emu, char *test_path, int num_th
             if(final != val){
                 ram_results++;
                 if(TEST_VERBOSE){
-                    printf("[ASSERT FAIL]: RAM [%d]\n\tExpected: %d\n\tValue: %d\n",addr,val,final);
+                    printf("[ASSERT FAIL]: FINAL RAM [%d]\n\tExpected: %d\n\tValue: %d\n",addr,val,final);
                 }
             }
         }
