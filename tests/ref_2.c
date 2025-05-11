@@ -37,7 +37,7 @@ static void test_ref(void **state){
     int pass=0, fail=0;
 
     //cycles += step_cpu(verbose);
-    char dir_path[] = "/home/rcd/proj/65x02/6502/v2/";
+    char dir_path[] = "./dummy_tests/";
 
     struct dirent *d;
     DIR *test_dir = opendir(dir_path);

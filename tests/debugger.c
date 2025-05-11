@@ -27,7 +27,7 @@ static void null_case(void **state){
 static void test_debugger(void **state){
     (void) state;
 
-    char t_path[] = "/home/rcd/proj/65x02/6502/v2/69.json";
+    char t_path[] = "/home/rcd/proj/65x02/6502/v2/01.json";
     int t_index = 0;
 
     etb_emu_6502 emu;

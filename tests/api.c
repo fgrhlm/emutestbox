@@ -96,7 +96,7 @@ static void t_step(void **state){
 static void t_run_6502_tests(void **state){
     (void) state;
 
-    char dir_path[] = "/home/rcd/proj/65x02/6502/v1/";
+    char dir_path[] = "./dummy_tests/";
 
     struct dirent *d;
     DIR *test_dir = opendir(dir_path);
@@ -110,7 +110,7 @@ static void t_run_6502_tests(void **state){
         if(!strcmp(d->d_name, ".") || !strcmp(d->d_name,"..")){
             continue;
         }
-        int ram[UINT16_MAX] = {0};
+        uint8_t ram[UINT16_MAX] = {0};
         etb_emu_6502 emu;
 
         etb_emu_6502_hook_pc(&emu, &dum_pc);
@@ -119,7 +119,7 @@ static void t_run_6502_tests(void **state){
         etb_emu_6502_hook_x(&emu, &dum_x);
         etb_emu_6502_hook_y(&emu, &dum_y);
         etb_emu_6502_hook_p(&emu, &dum_p);
-        etb_emu_6502_hook_ram(&emu, dum_ram);
+        etb_emu_6502_hook_ram(&emu, ram);
         etb_emu_6502_hook_step(&emu, etb_emu_6502_step);
 
         char t_path[strlen(dir_path)];
@@ -129,7 +129,7 @@ static void t_run_6502_tests(void **state){
 
         etb_test_status status = etb_run_6502_test(&emu, t_path, 1);
 
-        assert_int_equal(status, TEST_FAILED);
+        assert_int_equal(0, status);
     }
 
     closedir(test_dir);

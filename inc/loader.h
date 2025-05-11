@@ -44,7 +44,7 @@ void is_array(json_t *jt);
 void is_obj(json_t *jt);
 unsigned long get_file_size(FILE *fp);
 char *read_json_file(char *fn);
-etb_state *read_state(json_t* cur_a);
+etb_state *read_state(json_t *cur_a, char *state_name);
 void etb_free_state(etb_state *st);
 void etb_free_test(etb_test *t);
 void etb_print_state(etb_state st);

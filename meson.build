@@ -65,17 +65,29 @@ executable(
   link_args : '-pg'
 )
 
-src_test_ref_1 = files('tests/6502-emu/6502.c', 'tests/ref_1.c')
+src_test_ref_1 = files(
+  'tests/6502-emu/6502.c',
+  'tests/ref_1.c',
+  'src/api.c',
+  'src/loader.c',
+  'src/runner.c',
+  'src/debugger.c'
+)
+
 executable(
   'test_ref_1',
   src_test_ref_1,
   dependencies : dep_etb_test,
   c_args : ['-fno-stack-protector', '-pg'],
   link_args : '-pg',
-  include_directories : inc_ref_1
+  include_directories : [inc, inc_ref_1]
 )
 
 src_test_ref_2 = files(
+  'src/api.c',
+  'src/loader.c',
+  'src/runner.c',
+  'src/debugger.c',
   'tests/ref_2.c',
   'tests/f6502/src/cpu.c',
   'tests/f6502/src/addr.c',
@@ -101,13 +113,7 @@ executable(
   dependencies : dep_etb_test,
   c_args : ['-fno-stack-protector', '-pg'],
   link_args : '-pg',
-  include_directories : inc_ref_2
-)
-
-configure_file(
-  input : 'tests/test.json',
-  output : 'test.json',
-  copy: true
+  include_directories : [inc, inc_ref_2]
 )
 
 configure_file(
@@ -115,3 +121,5 @@ configure_file(
   output : 'run_tests.sh',
   copy: true
 )
+
+run_command('cp', '-r', 'tests/dummy_tests', 'build/dummy_tests')

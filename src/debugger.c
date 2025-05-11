@@ -1,15 +1,17 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #include "debugger.h"
 #include "api.h"
 #include "loader.h"
-#include "runner.h"
 
 char *t_path;
 int t_index, t_steps;
 
+// Formatted output of named (@name) integer value (@value)
 void print_reg(char *name, int value){ printf("%s: d: %d - h: [%x]\n", name, value, value); }
+
+// Formatted of all register values of dummy emulator @emu
 void print_regs(etb_emu_6502 *emu){
     etb_reg_6502 regs[] = {REG_6502_PC,REG_6502_S,REG_6502_A,REG_6502_X,REG_6502_Y,REG_6502_P};
     char *reg_names[] = {"PC","S","A","X","Y","P"};
@@ -19,9 +21,15 @@ void print_regs(etb_emu_6502 *emu){
     }
 }
 
+// Receives and processes user keyboard input.
 user_action etb_get_event(etb_emu_6502 *emu){
+    // Initialize requested action.
     user_action a = A_INVALID;
+
+    // Buffer for input keystroke.
     char inp;
+
+    // Print user interface.
     printf("\e[1;1H\e[2J");
     printf("File: %s\n", t_path);
     printf("Test index: %d\n", t_index);
@@ -29,8 +37,10 @@ user_action etb_get_event(etb_emu_6502 *emu){
     print_regs(emu);
     printf("\n[Q: Quit - S: Step - R: Reset]\n|>");
 
+    // Wait for and read input.
     scanf("%c", &inp);
 
+    // Map to action
     switch(inp){
         case 'q':
             a = A_QUIT;
@@ -58,7 +68,12 @@ user_action etb_get_event(etb_emu_6502 *emu){
     return a;
 }
 
-
+/*
+ *  Start a debugging session.
+ *  @emu - emutestbox dummy emulator.
+ *  @test_path - path to the ... test.
+ *  @test_index - index of the individual test in @test_path
+ * */
 int etb_debugger(etb_emu_6502 *emu, char *test_path, int test_index){
     t_path = test_path;
     t_index = test_index;
@@ -67,11 +82,16 @@ int etb_debugger(etb_emu_6502 *emu, char *test_path, int test_index){
     int quit = 0;
 
     while(!quit){
+        // Step counter
         t_steps = 0;
+
+        // Initialize action.
         action = A_WAIT;
 
         uint16_t pc;
         uint8_t s, a, x, y, p;
+
+        // Loader.
         etb_loader loader;
         etb_init_loader_threaded(&loader, 1);
 

@@ -4,6 +4,12 @@
 #include <stdio.h>
 #include <jansson.h>
 
+/*
+ * Wrapper to check if json_t object (@jt) is an array.
+ *
+ * References:
+ * https://jansson.readthedocs.io/en/latest/apiref.html#array
+*/
 void is_array(json_t *jt){
     if(!json_is_array(jt)){
         printf("not an array!\n");
@@ -12,6 +18,12 @@ void is_array(json_t *jt){
     }
 }
 
+/*
+ * Wrapper to check if json_t object (@jt) is an object.
+ *
+ * References:
+ * https://jansson.readthedocs.io/en/latest/apiref.html#object
+*/
 void is_obj(json_t *jt){
     if(!json_is_object(jt)){
         printf("not an obj!\n");
@@ -20,6 +32,12 @@ void is_obj(json_t *jt){
     }
 }
 
+/* Wrapper to get file size of opened file stream (@fp)
+ * References:
+ * https://www.man7.org/linux/man-pages/man3/fseek.3.html
+ * https://man7.org/linux/man-pages/man3/ftell.3p.html
+ * https://man7.org/linux/man-pages/man3/rewind.3p.html
+*/
 unsigned long get_file_size(FILE *fp){
     unsigned long len;
 
@@ -31,6 +49,14 @@ unsigned long get_file_size(FILE *fp){
     return len;
 }
 
+/*  Opens and reads a json file and returns pointer to buffer.
+ *
+ *  References:
+ *  https://man7.org/linux/man-pages/man3/fopen.3.html
+ *  https://man7.org/linux/man-pages/man3/malloc.3.html
+ *  https://man7.org/linux/man-pages/man3/fread.3.html
+ *  https://man7.org/linux/man-pages/man3/fclose.3.html
+ * */
 char *read_json_file(char *fn){
     FILE *fp;
 
@@ -51,12 +77,14 @@ char *read_json_file(char *fn){
     return buffer;
 }
 
-
-etb_state *read_state(json_t* cur_a){
+/* Reads a state (@state_name) "initial" or "final"
+*  from a SingleStepTests 6502 file.
+*/
+etb_state *read_state(json_t* cur_a, char *state_name){
     json_t *cur_x, *cur_y, *cur_z;
     etb_state *state = malloc(sizeof(etb_state));
 
-    cur_x = json_object_get(cur_a, "initial");
+    cur_x = json_object_get(cur_a, state_name);
     cur_y = json_object_get(cur_x, "pc");
 
     state->pc = json_integer_value(cur_y);
@@ -77,12 +105,12 @@ etb_state *read_state(json_t* cur_a){
     state->p = json_integer_value(cur_y);
 
     cur_y = json_object_get(cur_x, "ram");
-    unsigned long init_ram_len = json_array_size(cur_y);
+    unsigned long ram_len = json_array_size(cur_y);
 
-    state->mem_len = init_ram_len;
-    state->mem = malloc(sizeof(etb_mem)*init_ram_len);
+    state->mem_len = ram_len;
+    state->mem = malloc(sizeof(etb_mem)*ram_len);
 
-    for(int j=0; j<init_ram_len; j++){
+    for(int j=0; j<ram_len; j++){
         json_t *r = json_array_get(cur_y, j);
 
         json_t *jaddr = json_array_get(r, 0);
@@ -98,16 +126,19 @@ etb_state *read_state(json_t* cur_a){
     return state;
 }
 
+// Frees etb_state @st
 void etb_free_state(etb_state *st){
     free(st->mem);
     free(st);
 }
 
+// Frees etb_test @t
 void etb_free_test(etb_test *t){
     etb_free_state(t->initial);
     etb_free_state(t->final);
 }
 
+// Utility function to print formatted info about loaded etb_state @st
 void etb_print_state(etb_state st){
     printf(
         "pc:%d | s:%d | a:%d | x:%d | y:%d | p:%d",
@@ -120,6 +151,8 @@ void etb_print_state(etb_state st){
     }
 }
 
+// Opens, reads and parses a SingleStepTests 6502 test file at @path.
+// References: https://jansson.readthedocs.io/en/latest
 etb_test *load_6502_test(char *path){
     json_error_t err;
     json_t *root, *cur_x, *data;
@@ -127,19 +160,23 @@ etb_test *load_6502_test(char *path){
     char *buffer = read_json_file(path);
     root = json_loads(buffer, (JSON_DISABLE_EOF_CHECK), &err);
 
+    // Fail out if JSON root cant be read.
     if(root == NULL){
         printf("Could not parse json: %s\nError:%s\n", path, err.text);
         exit(-1);
     }
 
+    // Fail out if root is not an array.
     is_array(root);
 
+    // If everything is OK up to this point we can get rid of the buffer.
     free(buffer);
 
+    // Calculate size of the resulting test instances and allocate space for them.
     unsigned long root_len = json_array_size(root);
-
     etb_test *tests = malloc(sizeof(etb_test) * root_len);
 
+    // Parse tests
     for(int i=0; i<root_len; i++){
         data = json_array_get(root, i);
         is_obj(data);
@@ -147,8 +184,8 @@ etb_test *load_6502_test(char *path){
         cur_x = json_object_get(data, "name");
 
         tests[i].name = json_string_value(cur_x);
-        tests[i].initial = read_state(data);
-        tests[i].final = read_state(data);
+        tests[i].initial = read_state(data, "initial");
+        tests[i].final = read_state(data, "final");
         tests[i].len = root_len;
 
         //printf("== INITIAL ==\n");
